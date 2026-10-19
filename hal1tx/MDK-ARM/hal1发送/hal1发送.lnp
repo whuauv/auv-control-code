@@ -1,0 +1,22 @@
+--cpu Cortex-M3
+"hal1发送\startup_stm32f103xb.o"
+"hal1发送\main.o"
+"hal1发送\stm32f1xx_it.o"
+"hal1发送\stm32f1xx_hal_msp.o"
+"hal1发送\stm32f1xx_hal_gpio_ex.o"
+"hal1发送\stm32f1xx_hal_uart.o"
+"hal1发送\stm32f1xx_hal.o"
+"hal1发送\stm32f1xx_hal_rcc.o"
+"hal1发送\stm32f1xx_hal_rcc_ex.o"
+"hal1发送\stm32f1xx_hal_gpio.o"
+"hal1发送\stm32f1xx_hal_dma.o"
+"hal1发送\stm32f1xx_hal_cortex.o"
+"hal1发送\stm32f1xx_hal_pwr.o"
+"hal1发送\stm32f1xx_hal_flash.o"
+"hal1发送\stm32f1xx_hal_flash_ex.o"
+"hal1发送\stm32f1xx_hal_exti.o"
+"hal1发送\system_stm32f1xx.o"
+--strict --scatter "hal1发送\hal1发送.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "hal1发送.map" -o hal1发送\hal1发送.axf
