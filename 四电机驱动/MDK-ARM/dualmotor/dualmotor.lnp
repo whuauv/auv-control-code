@@ -1,0 +1,23 @@
+--cpu Cortex-M3
+"dualmotor\startup_stm32f103xb.o"
+"dualmotor\main.o"
+"dualmotor\stm32f1xx_it.o"
+"dualmotor\stm32f1xx_hal_msp.o"
+"dualmotor\stm32f1xx_hal_gpio_ex.o"
+"dualmotor\stm32f1xx_hal_tim.o"
+"dualmotor\stm32f1xx_hal_tim_ex.o"
+"dualmotor\stm32f1xx_hal.o"
+"dualmotor\stm32f1xx_hal_rcc.o"
+"dualmotor\stm32f1xx_hal_rcc_ex.o"
+"dualmotor\stm32f1xx_hal_gpio.o"
+"dualmotor\stm32f1xx_hal_dma.o"
+"dualmotor\stm32f1xx_hal_cortex.o"
+"dualmotor\stm32f1xx_hal_pwr.o"
+"dualmotor\stm32f1xx_hal_flash.o"
+"dualmotor\stm32f1xx_hal_flash_ex.o"
+"dualmotor\stm32f1xx_hal_exti.o"
+"dualmotor\system_stm32f1xx.o"
+--strict --scatter "dualmotor\dualmotor.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "dualmotor.map" -o dualmotor\dualmotor.axf
