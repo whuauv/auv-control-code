@@ -69,9 +69,9 @@ static void MX_USART1_UART_Init(void);
 #define RF_KEY_STOP         0x02U
 #define RF_KEY_REVERSE      0x03U
 
-#define MOTOR_PULSE_REVERSE 1000U
+#define MOTOR_PULSE_REVERSE 1200U   /* 60% 反转 */
 #define MOTOR_PULSE_STOP    1500U
-#define MOTOR_PULSE_FORWARD 2000U
+#define MOTOR_PULSE_FORWARD 1800U   /* 60% 正转 */
 
 static uint8_t rx_buffer[RF_RX_MAX_LEN];
 static uint8_t rx_count;
@@ -79,24 +79,28 @@ static uint32_t last_frame_tick;
 
 #define RF_LINK_TIMEOUT_MS 500U
 
-static void Motor_SetPulse(uint16_t pulse)
+/* 四路电调共用 TIM2：CH1->PA0(M1)，CH2->PA1(M2)，CH3->PA2(M3)，CH4->PA3(M4)。 */
+static void Motor_SetAll(uint16_t pulse)
 {
   __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, pulse);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, pulse);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, pulse);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_4, pulse);
 }
 
 static void RF_ApplyKey(uint8_t key)
 {
   if (key == RF_KEY_FORWARD)
   {
-    Motor_SetPulse(MOTOR_PULSE_FORWARD);
+    Motor_SetAll(MOTOR_PULSE_FORWARD);
   }
   else if (key == RF_KEY_REVERSE)
   {
-    Motor_SetPulse(MOTOR_PULSE_REVERSE);
+    Motor_SetAll(MOTOR_PULSE_REVERSE);
   }
   else
   {
-    Motor_SetPulse(MOTOR_PULSE_STOP);
+    Motor_SetAll(MOTOR_PULSE_STOP);
   }
   last_frame_tick = HAL_GetTick();
 }
@@ -174,8 +178,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  Motor_SetPulse(MOTOR_PULSE_STOP);
-  HAL_Delay(3000U);      /* 输出中位脉宽，等待电调完成解锁 */
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+  Motor_SetAll(MOTOR_PULSE_STOP);
+  HAL_Delay(3000U);      /* 四路输出中位脉宽，等待两个电调完成解锁 */
 
   /* 解锁期间 USART 已经在接收，先清掉残留字节和溢出标志。 */
   while (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE) != RESET)
@@ -204,7 +211,7 @@ int main(void)
 
     if ((HAL_GetTick() - last_frame_tick) > RF_LINK_TIMEOUT_MS)
     {
-      Motor_SetPulse(MOTOR_PULSE_STOP);
+      Motor_SetAll(MOTOR_PULSE_STOP);
     }
   }
   /* USER CODE END 3 */
@@ -288,6 +295,18 @@ static void MX_TIM2_Init(void)
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
   }

@@ -130,8 +130,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    RF_SendFor(CMD_FORWARD, 1000U);
-    RF_SendFor(CMD_REVERSE, 1000U);
+    RF_SendFor(CMD_FORWARD, 2000U);
+    RF_SendFor(CMD_REVERSE, 2000U);
     RF_SendFor(CMD_STOP, 1000U);
   }
   /* USER CODE END 3 */
