@@ -1,0 +1,47 @@
+{
+    // 这份文件只服务于 VS Code 的 IntelliSense（代码着色、跳转、补全、红波浪线），
+    // 完全不参与真正的编译。真正的编译由工程根目录的 Makefile 决定，两者只是「描述同一件事」。
+    "version": 4,
+    "configurations": [
+        {
+            "name": "STM32F103C8T6 / HAL / arm-none-eabi-gcc",
+
+            // 指定编译器，IntelliSense 才能自动找到 stdint.h、stddef.h 等系统头文件
+            "compilerPath": "D:/Tools/arm-gnu-toolchain/14.2.rel1/bin/arm-none-eabi-gcc.exe",
+            "intelliSenseMode": "windows-gcc-arm",
+            "cStandard": "c11",
+
+            // ★ 这里【没有】compileCommands 这一项，是故意的：
+            //   CubeMX 生成的 Makefile 里没有 compdb 目标，拿不到 compile_commands.json。
+            //   所以下面手写的 defines / includePath 就是唯一来源 —— 它们必须和
+            //   Makefile 里的 C_DEFS / C_INCLUDES 逐字一致（一一对应，别漏）。
+            "defines": [
+                // 这两个宏是「开关」：不定义它们，stm32f1xx_hal_conf.h 的内容等于被关掉，
+                // GPIO_InitTypeDef 之类的类型就不存在，于是满屏红波浪线。
+                "USE_HAL_DRIVER",
+                "STM32F103xB"
+            ],
+
+            // 顺序与 Makefile 的 C_INCLUDES 完全一致（对应 HAL 的三层：本工程 → HAL → CMSIS）
+            "includePath": [
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include"
+            ],
+
+            // 只索引「真正被 include 到的」头文件，避免全盘扫描 build/ 里的 .lst / .d 垃圾
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/Core/Inc",
+                    "${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc",
+                    "${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc/Legacy",
+                    "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
+                    "${workspaceFolder}/Drivers/CMSIS/Include"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ]
+}

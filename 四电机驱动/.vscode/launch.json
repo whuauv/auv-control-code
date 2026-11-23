@@ -1,0 +1,101 @@
+{
+    // =================================================================
+    //  调试配置（Cortex-Debug 扩展）
+    //
+    //  按下 F5 之后，扩展帮你依次做完这几件事（全都是它自动敲的命令）：
+    //    ① 跑 preLaunchTask（= mingw32-make）把程序编出来
+    //    ② 启动 OpenOCD，连上 ST-Link 和芯片
+    //    ③ 用 arm-none-eabi-gdb 连到 OpenOCD
+    //    ④ 下载程序进 Flash（所以调试时【不需要】Ctrl+Shift+B 里的 Flash）
+    //    ⑤ 停在断点处，把变量/寄存器/调用栈都接进 VS Code 界面
+    //
+    //  ⚠️ 调试完停止后，芯片里的程序仍在跑。
+    // =================================================================
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "① 调试 · 编译后停在 main",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            // 要调试的程序（必须和 Makefile 里的 TARGET 对上：TARGET = blink）
+            "executable": "${workspaceFolder}/build/blink.elf",
+            "device": "STM32F103C8",
+            // 芯片的"寄存器地图"（SVD），供 Peripheral Viewer 扩展显示寄存器图形视图。
+            // 多个工程共用一份，放在 D:/STM32/svd/，用 ../svd/ 指过去，不随工程复制。
+            "svdPath": "${workspaceFolder}/../svd/STM32F103xx.svd",
+            // ---- GDB Server ----
+            "servertype": "openocd",
+            // 写死绝对路径，不依赖 PATH —— VS Code 的环境变量是启动时抓的，
+            // 你之后改了系统 PATH，它可能还是旧的那份。
+            "serverpath": "D:/Tools/openocd/0.12.0-7/bin/openocd.exe",
+            "searchDir": [
+                "D:/Tools/openocd/0.12.0-7/openocd/scripts"
+            ],
+            // 等价于命令行的 -f interface/stlink.cfg -f target/stm32f1x.cfg
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f1x.cfg"
+            ],
+            // ---- 工具链 ----
+            // 扩展靠这个目录找 arm-none-eabi-gdb / objdump / nm
+            "armToolchainPath": "D:/Tools/arm-gnu-toolchain/14.2.rel1/bin",
+            // 下载完成后自动运行到 main 停下来，不用自己打 breakpoint
+            "runToEntryPoint": "main",
+            // F5 之前先自动编译
+            "preLaunchTask": "Build"
+        },
+        {
+            "name": "② 调试 · 从复位向量开始单步",
+            // 想看"上电后第一条指令是什么"，用这个：
+            // 复位后立刻停住，PC 停在启动文件入口，
+            // 按 F10 可以一步步走完 栈指针初始化 → 搬 .data → 清 .bss → 进 main
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/blink.elf",
+            "device": "STM32F103C8",
+            "svdPath": "${workspaceFolder}/../svd/STM32F103xx.svd",
+            "servertype": "openocd",
+            "serverpath": "D:/Tools/openocd/0.12.0-7/bin/openocd.exe",
+            "searchDir": [
+                "D:/Tools/openocd/0.12.0-7/openocd/scripts"
+            ],
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f1x.cfg"
+            ],
+            "armToolchainPath": "D:/Tools/arm-gnu-toolchain/14.2.rel1/bin",
+            "breakAfterReset": true,
+            "preLaunchTask": "Build"
+        },
+        {
+            "name": "③ 烧录并直接运行（不停留）",
+            // 用途：想"烧进去立刻跑起来"，又不想敲命令行。
+            // 流程：编译 → 烧录 → 复位 → 全速运行，全程不暂停。
+            // 与 ①② 的区别：它们会停在 main / 复位向量等你单步，这个不停。
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/blink.elf",
+            "device": "STM32F103C8",
+            "svdPath": "${workspaceFolder}/../svd/STM32F103xx.svd",
+            "servertype": "openocd",
+            "serverpath": "D:/Tools/openocd/0.12.0-7/bin/openocd.exe",
+            "searchDir": [
+                "D:/Tools/openocd/0.12.0-7/openocd/scripts"
+            ],
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f1x.cfg"
+            ],
+            "armToolchainPath": "D:/Tools/arm-gnu-toolchain/14.2.rel1/bin",
+            // 关键：这里【不】写 runToEntryPoint（写了就会停在 main），
+            // 改成在 launch 序列跑完后复位并运行。
+            "postLaunchCommands": [
+                "monitor reset run"
+            ],
+            "preLaunchTask": "Build"
+        }
+    ]
+}
