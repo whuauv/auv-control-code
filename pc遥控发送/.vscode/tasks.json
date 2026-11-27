@@ -1,0 +1,117 @@
+{
+    // =================================================================
+    //  构建任务清单：把"敲命令行"变成 Ctrl+Shift+B / 任务面板自动执行
+    //
+    //  这里的 command 和你在终端里手敲的一模一样，
+    //  只是被 VS Code 接管了：会自动开终端、跑完自动收面板、报错能点进去。
+    //
+    //  ⚠️ 命令是 mingw32-make，不是 make ——
+    //     本机 PATH 里只有 mingw32-make.exe（D:/mingw64/bin），没有 make。
+    //     两者都是 GNU Make，Makefile 语法 100% 通用，只是可执行文件名不同。
+    //
+    //  ★ 全部五个任务都走工程根目录的 GNUmakefile
+    //    （它 include 了 CubeMX 生成的 Makefile，并补上 flash / size / rebuild）。
+    //    所以下面这些名字能在终端里原样敲 —— VS Code 只是帮你按了回车。
+    // =================================================================
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            // ★ 这个任务不能删、不能改名：F5 的 preLaunchTask 指向它。
+            //   没有它，按 F5 就不会先自动编译。
+            "detail": "增量编译（= 终端敲 mingw32-make）",
+            "type": "shell",
+            "command": "mingw32-make",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            // $gcc 是 VS Code 内置的报错解析器：
+            // 它认得 gcc 的 "文件:行:列: error: xxx" 格式，
+            // 于是编译报错会出现在「问题」面板里，点击直接跳到出错那行。
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            }
+        },
+        {
+            "label": "Flash",
+            // = mingw32-make flash，展开后是：
+            //   openocd -s <scripts> -f interface/stlink.cfg -f target/stm32f1x.cfg \
+            //           -c "program build/blink.elf verify reset exit"
+            // reset = 复位后开始运行，exit = 烧完断开 OpenOCD。
+            // 它依赖 build/blink.elf，所以会【先编译、再烧】，一步到位。
+            "detail": "编译 + 烧录 + 运行（= 终端敲 mingw32-make flash）",
+            "type": "shell",
+            "command": "mingw32-make",
+            "args": [
+                "flash"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            // = mingw32-make clean。
+            // 注意：这一条来自 CubeMX 的 Makefile（`-rm -fR build`）。
+            // 之所以现在能在 Windows 上正常工作，是因为 GNUmakefile 顶部
+            // 把 Git 自带的 C:/Program Files/Git/usr/bin 追加进了 PATH，
+            // make 因此找到了 rm.exe（也顺便改用了 sh 执行命令）。
+            // 详见 GNUmakefile 顶部注释与笔记 §12.7 / §十三。
+            "detail": "清掉 build 目录（= 终端敲 mingw32-make clean）",
+            "type": "shell",
+            "command": "mingw32-make",
+            "args": [
+                "clean"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Rebuild",
+            // = mingw32-make rebuild，展开后就是 clean + 重新编译。
+            // 用途：改了影响面很大的头文件宏、或怀疑 make 的依赖判断陈旧时。
+            // ⚠️ 别用 `mingw32-make -B` 代替它 —— CubeMX 的 Makefile 里
+            //    建目录那个目标没加 "-"（忽略错误），build 目录已存在时
+            //    mkdir 会失败，-B 反而直接中止。见 GNUmakefile 注释。
+            "detail": "全量重编：先清理再编译（= 终端敲 mingw32-make rebuild）",
+            "type": "shell",
+            "command": "mingw32-make",
+            "args": [
+                "rebuild"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Size",
+            // = mingw32-make size。编译完其实会自动打印一次占用，
+            // 这个任务让你随时手动再查。
+            "detail": "查看固件占用多少 Flash / RAM（= 终端敲 mingw32-make size）",
+            "type": "shell",
+            "command": "mingw32-make",
+            "args": [
+                "size"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
